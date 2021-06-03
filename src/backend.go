@@ -27,8 +27,6 @@ type Backend struct {
 	Config    *Config
 
 	unexported struct{}
-	BaseCtx    func() context.Context
-	baseCtx    context.Context
 }
 
 func New(addr string, conf *Config) *Backend {
@@ -50,16 +48,6 @@ func NewLMTP(addr string, host string) *Backend {
 		LMTP:     true,
 		Host:     host,
 	}
-}
-
-func (be *Backend) Context() context.Context {
-	if be.baseCtx == nil {
-		if be.BaseCtx != nil {
-			be.baseCtx = be.BaseCtx()
-		}
-		be.baseCtx = SetConfig(be.baseCtx, be.Config)
-	}
-	return be.baseCtx
 }
 
 func (be *Backend) newConn() (*smtp.Client, error) {
@@ -102,14 +90,16 @@ func (be *Backend) newConn() (*smtp.Client, error) {
 	return c, nil
 }
 
-func (be *Backend) Login(state *smtp.ConnectionState, username, password string) (smtp.Session, error) {
+func (be *Backend) Login(ctx context.Context, state *smtp.ConnectionState, username, password string) (smtp.Session, error) {
 	log.Println("[login]", username, "from", state.RemoteAddr)
+	ctx = SetConfig(ctx, be.Config)
+
 	for _, usr := range be.Config.Users {
 		if usr.Name == username && usr.PlainPassword == password {
 			log.Println("[login] success")
 			return &sender2{
 				st:  state,
-				ctx: be.Context(),
+				ctx: ctx,
 			}, nil
 		}
 	}
@@ -117,12 +107,14 @@ func (be *Backend) Login(state *smtp.ConnectionState, username, password string)
 	return nil, errors.New("Invalid username or password")
 }
 
-func (be *Backend) AnonymousLogin(state *smtp.ConnectionState) (smtp.Session, error) {
+func (be *Backend) AnonymousLogin(ctx context.Context, state *smtp.ConnectionState) (smtp.Session, error) {
 	log.Println("[AnonymousLogin] HELO", state.Hostname)
+	ctx = SetConfig(ctx, be.Config)
+
 	s := &session2{
 		be:  be,
 		st:  state,
-		ctx: be.Context(),
+		ctx: ctx,
 	}
 
 	return s, nil

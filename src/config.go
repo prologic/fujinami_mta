@@ -52,4 +52,10 @@ type Listener struct {
 	WriteTimeout int
 }
 
+type DKIMSetting struct {
+	Domain string
+	PrivateKeyPath string
+	Selector string
+}
+
 type ListenDomain string

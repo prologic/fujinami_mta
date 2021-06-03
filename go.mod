@@ -3,6 +3,7 @@ module gosmtp
 go 1.13
 
 require (
+	github.com/emersion/go-dkim v0.3.0
 	github.com/emersion/go-msgauth v0.6.5
 	github.com/emersion/go-smtp v0.12.0
 	github.com/emersion/go-smtp-proxy v0.0.0-20200210193521-e8e7dd723514
