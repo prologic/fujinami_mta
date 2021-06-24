@@ -48,6 +48,16 @@ func (s *session2) Mail(from string, opts smtp.MailOptions) error {
 			Message:      "Error: nested MAIL command",
 		}
 	}
+
+	if from == "" {
+		log.Printf("501 %s(%s) %s -> %s\r\n", s.st.Hostname, s.st.RemoteAddr, s.from, s.to)
+		return &smtp.SMTPError{
+			Code:         501,
+			EnhancedCode: smtp.EnhancedCode{5, 0, 1},
+			Message:      "Error: Do not Empty",
+			ForceClose:   true,
+		}
+	}
 	log.Println("MAIL FROM:", from)
 	s.from = from
 	s.opts = &opts
@@ -83,6 +93,17 @@ func (s *session2) Data(r io.Reader) error {
 			Code:         503,
 			EnhancedCode: smtp.EnhancedCode{5, 5, 1},
 			Message:      "Error: need RCPT command",
+		}
+	}
+
+	black, blcnt := DnsblChkWithContext(s.ctx, StripPort(s.st.RemoteAddr))
+	if black {
+		log.Printf("503 %s(%s) %s -> %s\r\n", s.st.Hostname, s.st.RemoteAddr, s.from, s.to)
+		return &smtp.SMTPError{
+			Code:         550,
+			EnhancedCode: smtp.EnhancedCode{5, 7, 0},
+			Message:      "Error: You are in too many blacklists.",
+			ForceClose:   true,
 		}
 	}
 
@@ -129,6 +150,7 @@ func (s *session2) Data(r io.Reader) error {
 		t = ";"
 	}
 
+	fmt.Fprintf(wc, "X-Blacklist-Count: %d (%s)\r\n", blcnt, StripPort(s.st.RemoteAddr))
 	fmt.Fprintf(wc, "Return-Path: <%s>\r\n", s.from)
 	fmt.Fprintf(wc, "X-Transfer-To: <%s>\r\n", conf.ProxyAddress)
 	fmt.Fprintf(wc, "Deliverd-To: <%s>\r\n", s.to)

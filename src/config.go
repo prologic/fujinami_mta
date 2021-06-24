@@ -53,9 +53,9 @@ type Listener struct {
 }
 
 type DKIMSetting struct {
-	Domain string
+	Domain         string
 	PrivateKeyPath string
-	Selector string
+	Selector       string
 }
 
 type ListenDomain string
