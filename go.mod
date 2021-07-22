@@ -10,7 +10,7 @@ require (
 	github.com/google/uuid v1.2.0
 	github.com/miekg/dns v1.1.42 // indirect
 	github.com/mileusna/spf v0.9.3
-	github.com/prologic/bitcask v0.3.10
+	git.mills.io/prologic/bitcask v0.3.10
 	golang.org/x/crypto v0.0.0-20210506145944-38f3c27a63bf // indirect
 	golang.org/x/net v0.0.0-20210508051633-16afe75a6701 // indirect
 	golang.org/x/sys v0.0.0-20210507161434-a76c4d0a0096 // indirect
